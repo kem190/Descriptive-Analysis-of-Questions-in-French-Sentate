@@ -12,30 +12,25 @@ library(quanteda)
 library(SnowballC)
 library(lsa)
 
-
 data <- read_excel("D:\\A_File_Storage\\New_Desktop\\Rdir\\ganshefaguoneizheng1\\questions_parlementaires_AN.xlsx")
 
 df <- data %>%
-  select(type, rubrique, analyse, auteur.groupe.developpe, texte) %>%
-  rename(nature = type, theme = rubrique, summary = analyse, party = auteur.groupe.developpe, text = texte)
+  select(type, rubrique, analyse, auteur.groupe.developpe, texte, texte.1, minInt.developpe) %>%
+  rename(nature = type, theme = rubrique, summary = analyse, party = auteur.groupe.developpe, text = texte, answers = texte.1, answerer = minInt.developpe)
 
 df <- df %>%
   filter(nature != "QG")
 
-myfrench <- c("ministre", "plus", "a", "demande", "mme", "santé",
-              "gouvernement", "l'attention", "ainsi", "d'une",
-              "d'un", "situation", "france", "si", "personnes", "em", "loi", "nationale", "2023", "qu'il", "francais", "attire",
-              "souhaite", "interroge", "cas", "mettre", "savoir", "nombre",
-              "député", "notamment", "c'est", "ans", "mise", "n'est", 
-              "connaitre", "appelle", "face", "2021", "l'article", "2022", "° ", "000")
+myfrench <- c("a","mme", "ainsi", "d'une", "d'un", "si", "em", "2023", "qu'il", "francais", "attire",
+              "2021", "2022", "°", "000", "<", ">")
 
-forgivemyfrench <- c(stopwords("french"), myfrench, stopwords_fr, urls)
-
+dict_for_frequency <- c("ministre", "ans", "c'est", "appelle", "souhaite", "mise",  "connaitre", "n'est", "l'article", "plus",
+                        "député", "notamment", "demande", "interroge", "cas", "mettre", "savoir", "nombre", 
+                        "gouvernement", "loi", "l'attention", "personnes", "situation", "face", "france", "nationale")
+forgivemyfrench <- c(stopwords("french"), myfrench, stopwords_fr)
 df$party_nature_interaction <- interaction(df$party, df$nature)
-
-#df <- df %>%
-#  select(text, party_nature_interaction)
-
+# Tagging and combining
+df$QA <- paste0("Q.", df$text, " A.", df$answers)
 
 dfm <- df %>%
   corpus(text_field = "text") %>%
@@ -45,10 +40,11 @@ dfm <- df %>%
   tokens_remove(forgivemyfrench) %>%
   dfm()
 
-dfm_agg <- dfm_group(dfm, groups = docvars(dfm, "party_nature_interaction"))
+topfeatures(dfm, n = 50)
 
-dfm_agg <- dfm_trim(dfm_agg, min_docfreq = 2, docfreq_type = "count")
-
+dfm_agg <- dfm %>%
+  dfm_group(groups = docvars(dfm, "party_nature_interaction")) %>%
+  dfm_trim(min_docfreq = 2, docfreq_type = "count")
 
 dfm_agg_wordfish <- textmodel_wordfish(dfm_agg, sparse = TRUE)
 
@@ -71,3 +67,13 @@ feat_betas %>%
   arrange(betas) %>%
   top_n(20)
 
+##################### do the same to the answers ##############
+unique(data$minInt.developpe)
+
+data <- data %>%
+  filter(typeJO != "JO_LOI_DECRET") %>%
+  filter(type != "QG")
+  
+answerers <- as.data.frame(table(data$minInt.developpe))
+answerers <- answerers %>%
+  arrange(-Freq)

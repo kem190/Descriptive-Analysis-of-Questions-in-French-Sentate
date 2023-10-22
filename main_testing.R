@@ -1,12 +1,13 @@
+## descriptive
 library(readxl)
-deputes <- read_excel("D:\\A_File_Storage\\New_Desktop\\Rdir\\ganshefaguoneizheng\\listes_deputes.xlsx")
-data <- read_excel("D:\\A_File_Storage\\New_Desktop\\Rdir\\ganshefaguoneizheng\\questions_parlementaires_AN.xlsx")
+library(writexl)
+deputes <- read_excel("D:\\A_File_Storage\\New_Desktop\\Rdir\\ganshefaguoneizheng1\\listes_deputes.xlsx")
+data <- read_excel("D:\\A_File_Storage\\New_Desktop\\Rdir\\ganshefaguoneizheng1\\questions_parlementaires_AN.xlsx")
 
 library(dplyr)
 library(stringr)
-data_n <- sample_n(data, 100)
 data <- data %>%
-  filter(!is.na(texte))
+  filter(!is.na(texte)) # 删除了qg
 
 data <- data %>%
   mutate(names = str_extract(texte, "(?<=^M\\. |^Mme\\s)[A-ZÀÂÇÉÈÊËÎÏÔŒÛÙÜ][a-zàâçéèêëîïôûùüÿñæœ]+(?:[-'/]?[A-ZÀÂÇÉÈÊËÎÏÔŒÛÙÜ][a-zàâçéèêëîïôûùüÿñæœ]+)?(?:\\s(?:d'|de\\s|la\\s|à\\s|l')?[A-ZÀÂÇÉÈÊËÎÏÔŒÛÙÜ][a-zàâçéèêëîïôûùüÿñæœ]+(?:[-'/]?[A-ZÀÂÇÉÈÊËÎÏÔŒÛÙÜ][a-zàâçéèêëîïôûùüÿñæœ]+)?)*"))
@@ -21,14 +22,95 @@ data <- data %>%
 
 deputes <- deputes %>%
   mutate(full_name = paste(Prénom, Nom))
-unique_names_in_data <- unique(data$names)
-missing_names <- sort(setdiff(unique_names_in_data, deputes$full_name))
+#unique_names_in_data <- unique(data$names)
+#missing_names <- sort(setdiff(unique_names_in_data, deputes$full_name))
 data_filtered <- data %>%
   filter(!names %in% missing_names)
 merged_data <- data_filtered %>%
   left_join(deputes, by = c("names" = "full_name"))
+merged_data <- merged_data %>%
+  filter(!is.na(names)) # 删除了找不到的人
 
-colnames(merged_data)
+############# count speakers ##################
+speaker_counts <- merged_data %>%
+  group_by(names) %>%
+  summarize(count = n()) %>%
+  arrange(-count)
+
+questions_analysis <- merged_data %>%
+  group_by(names, rubrique) %>%
+  summarize(count = n()) %>%
+  arrange(-count)
+
+print(questions_analysis, n = 20)
+
+
+############# sorting with chatGPT4.0 (2023.10)#######################
+
+#theme_count <- merged_data %>%
+#  group_by(rubrique) %>%
+#  summarise(count = n()) %>%
+#  arrange(desc(count))
+
+#print(theme_count, n = 209)
+
+merged_data$category <- case_when(
+  merged_data$rubrique %in% c("énergie et carburants", "eau et assainissement", "environnement", "biodiversité", "bois et forêts", "déchets", "numérique", "pollution", "aquaculture et pêche professionnelle", "mer et littoral", "climat", "développement durable") ~ "Environment and Energy",
+  
+  merged_data$rubrique %in% c("professions de santé", "personnes handicapées", "santé", "établissements de santé", "pharmacie et médicaments", "maladies", "médecine", "assurance maladie maternité", "sang et organes humains", "dépendance", "fin de vie et soins palliatifs", "personnes âgées", "interruption volontaire de grossesse", "bioéthique") ~ "Health and Welfare",
+  
+  merged_data$rubrique %in% c("agriculture", "animaux", "élevage", "chasse et pêche", "agroalimentaire", "cours d'eau, étangs et lacs") ~ "Agriculture and Animals",
+  
+  merged_data$rubrique %in% c("logement", "logement : aides et prêts", "urbanisme") ~ "Housing and Urbanism",
+  
+  merged_data$rubrique %in% c("enseignement", "enseignement supérieur", "enseignement secondaire", "enseignement maternel et primaire", "enseignement technique et professionnel", "enseignements artistiques", "enseignement privé", "enseignement agricole", "éducation physique et sportive") ~ "Education",
+  
+  merged_data$rubrique %in% c("outre-mer", "Français de l'étranger", "étrangers", "frontaliers", "réfugiés et apatrides", "immigration", "nationalité") ~ "International and Migration",
+  
+  merged_data$rubrique %in% c("sécurité des biens et des personnes", "sécurité routière", "ordre public", "police", "gendarmerie", "sécurité sociale", "harcèlement", "crimes, délits et contraventions", "justice") ~ "Security and Justice",
+  
+  merged_data$rubrique %in% c("enfants", "femmes", "jeunes", "famille", "gens du voyage") ~ "Demographics",
+  
+  merged_data$rubrique %in% c("commerce et artisanat", "entreprises", "industrie", "commerce extérieur", "tourisme et loisirs", "bâtiment et travaux publics", "professions libérales", "économie sociale et solidaire", "emploi et activité", "chômage", "travail", "services publics", "services", "politique économique", "emploi et activité") ~ "Economy and Employment",
+  
+  merged_data$rubrique %in% c("transports ferroviaires", "automobiles", "transports routiers", "transports", "transports urbains", "transports aériens", "transports par eau", "cycles et motocycles") ~ "Transportation",
+  
+  merged_data$rubrique %in% c("impôts et taxes", "impôt sur le revenu", "impôts locaux", "taxe sur la valeur ajoutée", "finances publiques", "impôt sur les sociétés", "impôt sur la fortune immobilière") ~ "Taxes and Finances",
+  
+  merged_data$rubrique %in% c("fonctionnaires et agents publics", "collectivités territoriales", "communes", "élus", "administration", "politique extérieure", "Parlement", "Gouvernement", "ministères et secrétariats d'État", "Union européenne") ~ "Government and Administration",
+  
+  merged_data$rubrique %in% c("associations et fondations", "banques et établissements financiers", "droits fondamentaux", "pauvreté", "handicapés", "laïcité", "religions et cultes", "démographie", "régions", "départements") ~ "Social Issues and Civil Rights",
+  
+  merged_data$rubrique %in% c("numérique", "télécommunications", "Internet", "nouvelles technologies") ~ "Technology and Communication",
+  
+  merged_data$rubrique %in% c("culture", "arts et spectacles", "patrimoine culturel", "presse et livres", "audiovisuel et communication", "langue française") ~ "Culture and Media",
+  
+  TRUE ~ "Others"
+)
+
+################## parties' concern #####################
+#colnames(merged_data)
+co_party_category <- merged_data %>%
+  filter(category != "Others") %>%
+  with(table(auteur.groupe.developpe, category)) %>%
+  as.data.frame() %>%
+  arrange(-Freq)
+
+co_party_theme <- data %>%
+  with(table(auteur.groupe.developpe, rubrique)) %>%
+  as.data.frame() %>%
+  arrange(-Freq)
+  
+question_count <- as.data.frame(table(data$auteur.groupe.developpe))
+co_party_minister <- data %>%
+  with(table(auteur.groupe.developpe, minInt.developpe)) %>%
+  as.data.frame() %>%
+  left_join(question_count, by = c("auteur.groupe.developpe" = "Var1")) %>%
+  mutate(percentage = Freq.x/Freq.y * 100) %>%
+  arrange(-percentage)
+
+write.csv(co_occurrence, file = "party_category.csv", fileEncoding = "UTF-8")
+###################### unused, plotting themes overtime ##############################
 
 eng_data <- merged_data %>%
   select(type, rubrique, analyse, names, Région, Département, `Groupe politique (complet)`, Profession, dateJO) %>%
