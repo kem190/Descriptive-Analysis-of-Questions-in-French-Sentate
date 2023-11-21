@@ -9,10 +9,11 @@ Among the three distinct forms that questions took place, Questions to the Gover
 
 The questions we tried to answer:
 
-# Background
+As in this project I mainly worked on the code so I will try to emphisize more on the coding part for now.
+    # Background
 
-# Steps
-## Cleaning
+  # Steps
+  ## Cleaning
 For the data cleaning process, as the data itself is pretty organized, we tried to maintain as much data as possible.
 For example, the we used seperate stopwords lists for our analysis, for estimating the wordfish model, we simple removed simple stopwords and urls, we even left "ministre" inside. 
 ```R
@@ -24,6 +25,30 @@ When inspecting the word frequencies, we have to remove the words that are simul
 dict_for_frequency <- c("ministre", "ans", "c'est", "appelle", "souhaite", "mise",  "connaitre", "n'est", "l'article", "plus",
                         "député", "notamment", "demande", "interroge", "cas", "mettre", "savoir", "nombre", 
                         "gouvernement", "loi", "l'attention", "personnes", "situation", "face", "france", "nationale")
+```
+
+## Merging
+Since the data are distributed into two seperate .csv files, we have to merge them in order to 
+We've decided to use the names of the parliament members as the key for the merge. From the main table, we managed to extract the Last names of the "auteur" of the question. Looks horrible, but that's the bset I can do with French names.
+```R
+data <- data %>%
+  mutate(names = str_extract(texte, "(?<=^M\\. |^Mme\\s)[A-ZÀÂÇÉÈÊËÎÏÔŒÛÙÜ][a-zàâçéèêëîïôûùüÿñæœ]+(?:[-'/]?[A-ZÀÂÇÉÈÊËÎÏÔŒÛÙÜ][a-zàâçéèêëîïôûùüÿñæœ]+)?(?:\\s(?:d'|de\\s|la\\s|à\\s|l')?[A-ZÀÂÇÉÈÊËÎÏÔŒÛÙÜ][a-zàâçéèêëîïôûùüÿñæœ]+(?:[-'/]?[A-ZÀÂÇÉÈÊËÎÏÔŒÛÙÜ][a-zàâçéèêëîïôûùüÿñæœ]+)?)*"))
+```
+This have managed to extract 557 names out of the main table, whereas the info table contains 577 names. With manual inspection, we've been able to locate the people that's not on the list, whose names are harder to find, like "Emmanuel Taché de la Pagerie" and two "Alexandra Martin"s, and I've fixed them manually. The names then came to 564.
+```R
+deputes <- deputes %>%
+  mutate(full_name = paste(Prénom, Nom))
+unique_names_in_data <- unique(data$names)
+missing_names <- sort(setdiff(deputes$full_name, unique_names_in_data))
+missing_names
+```
+We then inspected the missing values and found that there are 10 rows missing the name cell, and are able to locate 5 names, yet they are not on the "deputes" list, weird.
+Checking again on the deputes.csv list, we found that people's full names can act as a mergeing key, so we did that.
+```R
+merged_data <- data%>%
+  left_join(deputes, by = c("names" = "full_name"))
+merged_data <- merged_data %>%
+  filter(!is.na(names))
 ```
 
 ## Descriptive Statistical Analysis
