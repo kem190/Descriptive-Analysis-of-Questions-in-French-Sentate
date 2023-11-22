@@ -8,11 +8,11 @@ Parliamentary questions play a fundamental role in France's democratic instituti
 Among the three distinct forms that questions took place, Questions to the Government (QOSD) act as an important role as it is used for general interest and attract much more public attention, since it is made public on TV. This is also the questions that 
 
 The questions we tried to answer:
-??
+"left blank"
 
 As in this project I mainly worked on the code so I will try to emphisize more on the coding part for now.
-    # Background
-??
+# Background
+"left blank"
   # Steps
   ## Cleaning
 For the data cleaning process, as the data itself is pretty organized, we tried to maintain as much data as possible.
@@ -85,7 +85,7 @@ Few things that we have noticed:
 
 ## Text Analysis: a Wordfish Model
 After the initial description, we've decided to add more flavour to the analysis by digging deeper into the texts of the questions and answers, and trying to figure out the attitudes of the parties, we decided to use wordfish model.
-??
+"left blank"
 ## Validation
 
 # Conclusion
