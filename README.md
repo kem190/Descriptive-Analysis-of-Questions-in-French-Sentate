@@ -8,13 +8,15 @@ Parliamentary questions play a fundamental role in France's democratic instituti
 Among the three distinct forms that questions took place, Questions to the Government (QOSD) act as an important role as it is used for general interest and attract much more public attention, since it is made public on TV. This is also the questions that 
 
 The questions we tried to answer:
+??
 
 As in this project I mainly worked on the code so I will try to emphisize more on the coding part for now.
     # Background
-
+??
   # Steps
   ## Cleaning
 For the data cleaning process, as the data itself is pretty organized, we tried to maintain as much data as possible.
+Among the three question types, Written questions (QE) has a much higher proportion than the other to, of 95.34% and its text has a clearer structure compared to other two types, so I've decided to use this questions only (making the data biased in some sense)
 For example, the we used seperate stopwords lists for our analysis, for estimating the wordfish model, we simple removed simple stopwords and urls, we even left "ministre" inside. 
 ```R
 myfrench <- c("a","mme", "ainsi", "d'une", "d'un", "si", "em", "2023", "qu'il", "francais", "attire",
@@ -52,8 +54,38 @@ merged_data <- merged_data %>%
 ```
 
 ## Descriptive Statistical Analysis
-Among the three question types, Written questions (QE) has a much higher proportion than the other to, of 95.34%, 
+We started with a few descriptive statistics based on the processed data.
+Tirst we count the most frequent auteurs and party names.
+```R
+question_count <- as.data.frame(table(data$auteur.groupe.developpe))
+```
+Then we've fiddled with the co occurence of different variables like this:
+```R
+co_person_party <- merged_data %>%
+  with(table(auteur.groupe.developpe, names)) %>%
+  as.data.frame() %>%
+  left_join(question_count, by = c("auteur.groupe.developpe" = "Var1")) %>%
+  mutate(percentage = Freq.x/Freq.y * 100) %>%
+  rename(count.person = Freq.x, count.party = Freq.y) %>%
+  filter(count.person != 0) %>%
+  arrange(-percentage)
+
+co_party_category <- merged_data %>%
+  filter(category != "Others") %>%
+  with(table(auteur.groupe.developpe, category)) %>%
+  as.data.frame() %>%
+  arrange(-Freq)
+```
+However, nothing really interesting popped up, since either of us two have 
+Good thing is we have got a rather clear picture of the data through this process. 
+Few things that we have noticed:
+1. The most concerned catagory is carbon energy, which partly ressonates the energy crisis in Europe in 2022.
+2. There are a huge number of questions concerning health (professions de santé), which is a quite vague catagory with huge amounts of questions focused on questioning the meaning of specific articles of law.
+3. We have noticed that the original themes catagorized in the dataset is quite obfuscate. For example, "agriculture" contains crops, farm animals and even wild animals, so a further catagorization of the questions could be considered.
+
 ## Text Analysis: a Wordfish Model
+After the initial description, we've decided to add more flavour to the analysis by digging deeper into the texts of the questions and answers, and trying to figure out the attitudes of the parties, we decided to use wordfish model.
+??
 ## Validation
 
 # Conclusion
