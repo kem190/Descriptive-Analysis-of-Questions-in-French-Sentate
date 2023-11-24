@@ -106,4 +106,6 @@ This lead to interesting results as QE often find themselves on position that is
 ("intentionally left blank")
 ## Validation
 
+# Discussion
+
 # Conclusion
