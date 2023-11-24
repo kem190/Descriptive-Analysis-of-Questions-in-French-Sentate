@@ -12,10 +12,17 @@ The questions we tried to answer:
 
 As in this project I mainly worked on the code so I will try to emphisize more on the coding part for now.
 # Background
-"left blank"
+It is vital to understand that the three different types (originally named nature in french) of questions, QG, QE and QOSD, pose differences in purpose, procedure and visibility, and they are also completely different in their data structure. 
+QE (questions écrites) means that the question is written. These questions often tend to focus on specific issues like the difficulties in implementing laws, or to inquire about a minister's reform plans. They are written down and handed in sometimes weeks before answers so this allows the minister to form a complementary response. The questions and answers are published on the official journal yet receive less public attention compared to televised questions.
+QG (Questions au Gouvernement) is used for broader general interests, often addressing significant national issues or policies. These questions are not exhibited earlier so they allow more dynamic and immediate responses. They are recorded during a TV session where deputies pose question directly to government officials so they also receive greater attention from the media and citizens.
+QOSD (Questions Orales Sans Débat) focus on local and technical interests and tend to be more specific and succinct than other questions.
+
+Concerning the data, the answers of the questions are subject to different formatting principles but are stored in the same place, this makes it harder to extract the texts when put together. For example, though the questions are stored in a consistant manner, the answer cell for QE always concerning two to three speakers, while the cell for QG contains multiple follow-up questions.
+
   # Steps
   ## Cleaning
 For the data cleaning process, as the data itself is pretty organized, we tried to maintain as much data as possible.
+
 Among the three question types, Written questions (QE) has a much higher proportion than the other to, of 95.34% and its text has a clearer structure compared to other two types, so I've decided to use this questions only (making the data biased in some sense)
 For example, the we used seperate stopwords lists for our analysis, for estimating the wordfish model, we simple removed simple stopwords and urls, we even left "ministre" inside. 
 ```R
@@ -31,7 +38,7 @@ dict_for_frequency <- c("ministre", "ans", "c'est", "appelle", "souhaite", "mise
 
 ## Merging
 Since the data are distributed into two seperate .csv files, we have to merge them in order to 
-We've decided to use the names of the parliament members as the key for the merge. From the main table, we managed to extract the Last names of the "auteur" of the question. Looks horrible, but that's the bset I can do with French names.
+We've decided to use the names of the parliament members as the key for the merge. From the main table, we managed to extract the Last names of the deputee (auteur) of the question. Looks horrible, but that's the bset I can do with French names.
 ```R
 data <- data %>%
   mutate(names = str_extract(texte, "(?<=^M\\. |^Mme\\s)[A-ZÀÂÇÉÈÊËÎÏÔŒÛÙÜ][a-zàâçéèêëîïôûùüÿñæœ]+(?:[-'/]?[A-ZÀÂÇÉÈÊËÎÏÔŒÛÙÜ][a-zàâçéèêëîïôûùüÿñæœ]+)?(?:\\s(?:d'|de\\s|la\\s|à\\s|l')?[A-ZÀÂÇÉÈÊËÎÏÔŒÛÙÜ][a-zàâçéèêëîïôûùüÿñæœ]+(?:[-'/]?[A-ZÀÂÇÉÈÊËÎÏÔŒÛÙÜ][a-zàâçéèêëîïôûùüÿñæœ]+)?)*"))
@@ -55,7 +62,7 @@ merged_data <- merged_data %>%
 
 ## Descriptive Statistical Analysis
 We started with a few descriptive statistics based on the processed data.
-Tirst we count the most frequent auteurs and party names.
+First we chekced the deputees who are most constantly posting questions as well as their party names.
 ```R
 question_count <- as.data.frame(table(data$auteur.groupe.developpe))
 ```
@@ -85,7 +92,18 @@ Few things that we have noticed:
 
 ## Text Analysis: a Wordfish Model
 After the initial description, we've decided to add more flavour to the analysis by digging deeper into the texts of the questions and answers, and trying to figure out the attitudes of the parties, we decided to use wordfish model.
-"left blank"
+
+As stated, in this dataset, answers often tend to have a different structure. Because of this, we have estimated several models to obtain a comprehensive understanding of the data.
+
+Fist, we've estimated a model only from the questions:
+![image](https://github.com/kem190/Descriptive-Analysis-of-Questions-in-French-Sentate/assets/115566439/a01a151b-c1ca-4574-a0d0-b990926bf41d)
+
+and as confirmed by our substantive knowledge for French politics ("left blank"), also further validation of the models will be the focus of the next part.
+
+This lead to interesting results as QE often find themselves on position that is slightly left compared to their QOSD counterparts, and the result of a Wilcoxon signed-rank test showed that the ranking of the parties are quite similar.
+![image](https://github.com/kem190/Descriptive-Analysis-of-Questions-in-French-Sentate/assets/115566439/19257c1b-f649-4690-bea1-056a038298a8)
+
+("intentionally left blank")
 ## Validation
 
 # Conclusion
